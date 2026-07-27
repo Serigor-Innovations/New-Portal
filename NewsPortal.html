@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI industry news</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-panel: #131826;
+    --bg-panel-alt: #171d30;
+    --border: #262d42;
+    --ink: #f2f4f8;
+    --ink-soft: #8b93a7;
+    --accent: #f2b705;
+    --accent-dark: #d69e00;
+    --accent-soft: rgba(242, 183, 5, 0.12);
+    --radius: 10px;
+    --radius-pill: 999px;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { margin-bottom: 28px; }
+  header h1 { font-size: 26px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; color: var(--ink); }
+  header p { color: var(--ink-soft); margin: 0; font-size: 14px; }
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .filters input, .filters select {
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
+    color: var(--ink);
+    width: 100%;
+  }
+  .filters input::placeholder { color: var(--ink-soft); }
+  .filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
+  .filter-row-wide input { grid-column: 1 / -1; }
+  .filter-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .clear-btn {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .clear-btn:hover { color: var(--accent-dark); text-decoration: underline; }
+  #status { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); letter-spacing: 0.02em; }
+  .card-list { display: flex; flex-direction: column; gap: 12px; }
+  .news-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    transition: border-color 0.15s ease;
+  }
+  .news-card:hover { border-color: var(--accent); }
+  .news-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .news-title { font-size: 16.5px; font-weight: 700; margin: 0; color: var(--ink); }
+  .news-meta {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 6px 0 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .news-age {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(242, 183, 5, 0.35);
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .news-desc { font-size: 13.5px; color: var(--ink); opacity: 0.9; margin: 12px 0 0; }
+  .news-impact {
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--accent-soft);
+    border: 1px solid rgba(242, 183, 5, 0.3);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-top: 12px;
+  }
+  .news-impact strong {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .news-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .source-btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 9px 18px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #0a0e1a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .source-btn:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); font-size: 14px; }
+
+  /* Breaking news ticker */
+  .ticker-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg-panel-alt);
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+  }
+  .ticker-label {
+    flex: 0 0 auto;
+    background: var(--accent);
+    color: #0a0e1a;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 10px 18px;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+  .ticker-track {
+    flex: 1 1 auto;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+  }
+  .ticker-move {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    padding: 10px 0;
+    animation: ticker-scroll 45s linear infinite;
+  }
+  .ticker-wrap:hover .ticker-move { animation-play-state: paused; }
+  .ticker-move a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 13.5px;
+    margin-right: 48px;
+  }
+  .ticker-move a:hover { color: var(--accent); text-decoration: underline; }
+  .ticker-move a::before { content: '● '; color: var(--accent); opacity: 0.85; margin-right: 6px; }
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+<div class="ticker-wrap">
+  <span class="ticker-label">Breaking</span>
+  <div class="ticker-track">
+    <div class="ticker-move" id="tickerMove"></div>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <h1>AI industry news</h1>
+    <p>AI upskilling and workforce news from Latin America, Europe, and Asia-Pacific. Stories from the last 60 days.</p>
+  </header>
+
+  <div class="filters filter-row-wide">
+    <input id="titleFilter" type="text" placeholder="Search headlines, e.g. GPT-5, hiring freeze, Anthropic">
+  </div>
+
+  <div class="filters">
+    <select id="sourceFilter"><option value="">All sources</option></select>
+    <select id="daysFilter">
+      <option value="60" selected>Last 60 days</option>
+      <option value="30">Last 30 days</option>
+      <option value="14">Last 14 days</option>
+      <option value="7">Last 7 days</option>
+    </select>
+  </div>
+
+  <div class="filter-actions">
+    <span id="status">Loading news…</span>
+    <button class="clear-btn" id="clearFilters">Clear all filters</button>
+  </div>
+
+  <div class="card-list" id="newsList"></div>
+</div>
+
+<script>
+  // Paste the web app URL from your NewsCode.gs Apps Script deployment here.
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzs2LdxqXMGPh-4pgIFeuPJD4amfj6EKPVbCGZxkEPOE3ik0Uja7XPwBWv4NFRTDrDt/exec';
+
+  const newsListEl = document.getElementById('newsList');
+  const statusEl = document.getElementById('status');
+  const titleInput = document.getElementById('titleFilter');
+  const sourceSelect = document.getElementById('sourceFilter');
+  const daysSelect = document.getElementById('daysFilter');
+  const clearBtn = document.getElementById('clearFilters');
+
+  let allItems = [];
+
+  function daysAgo(isoDate) {
+    if (!isoDate) return null;
+    const diffMs = Date.now() - new Date(isoDate).getTime();
+    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  }
+
+  function formatDate(isoDate) {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderNews(items) {
+    newsListEl.innerHTML = '';
+
+    if (!items.length) {
+      newsListEl.innerHTML = '<div class="empty">No news matches these filters right now.</div>';
+      return;
+    }
+
+    items.forEach(function (item) {
+      const age = daysAgo(item.pubDate);
+      const ageLabel = age === null ? '' : age === 0 ? 'Today' : age + 'd ago';
+
+      const card = document.createElement('div');
+      card.className = 'news-card';
+
+      card.innerHTML =
+        '<div class="news-top">' +
+          '<div>' +
+            '<p class="news-meta"></p>' +
+            '<p class="news-title"></p>' +
+          '</div>' +
+          '<span class="news-age"></span>' +
+        '</div>' +
+        '<p class="news-desc"></p>' +
+        (item.impact ? '<div class="news-impact"><strong>Potential industry impact</strong><span class="impact-text"></span></div>' : '') +
+        '<div class="news-actions">' +
+          '<a class="source-btn" target="_blank" rel="noopener">View Full Article →</a>' +
+        '</div>';
+
+      card.querySelector('.news-meta').textContent = formatDate(item.pubDate);
+      card.querySelector('.news-title').textContent = item.title || 'Untitled';
+      card.querySelector('.news-age').textContent = ageLabel;
+      card.querySelector('.news-desc').textContent = item.description || '';
+      if (item.impact) card.querySelector('.impact-text').textContent = ' ' + item.impact;
+      card.querySelector('.source-btn').href = item.url || '#';
+
+      newsListEl.appendChild(card);
+    });
+  }
+
+  function populateSources(items) {
+    const sources = Array.from(new Set(items.map(function (i) { return i.source; }).filter(Boolean))).sort();
+    sources.forEach(function (s) {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      sourceSelect.appendChild(opt);
+    });
+  }
+
+  function renderTicker(items) {
+    const tickerMove = document.getElementById('tickerMove');
+    const sorted = items.slice().sort(function (a, b) { return new Date(b.pubDate) - new Date(a.pubDate); });
+    const latest = sorted.slice(0, 10);
+
+    if (!latest.length) {
+      tickerMove.innerHTML = '<a href="#">No recent AI news right now — check back soon.</a>';
+      return;
+    }
+
+    const headlineLinks = latest.map(function (item) {
+      const a = document.createElement('a');
+      a.href = item.url || '#';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = (item.source ? item.source + ': ' : '') + (item.title || '');
+      return a.outerHTML;
+    }).join('');
+
+    // Duplicate the sequence so the loop from -50% back to 0% is seamless.
+    tickerMove.innerHTML = headlineLinks + headlineLinks;
+  }
+
+  function applyFilters() {
+    const titleQ = titleInput.value.trim().toLowerCase();
+    const sourceQ = sourceSelect.value;
+    const maxDays = Number(daysSelect.value);
+
+    const filtered = allItems.filter(function (item) {
+      if (titleQ && !(item.title || '').toLowerCase().includes(titleQ)) return false;
+      if (sourceQ && item.source !== sourceQ) return false;
+      const age = daysAgo(item.pubDate);
+      if (age !== null && age > maxDays) return false;
+      return true;
+    });
+
+    renderNews(filtered);
+  }
+
+  function clearAllFilters() {
+    titleInput.value = '';
+    sourceSelect.selectedIndex = 0;
+    daysSelect.value = '60';
+    applyFilters();
+  }
+
+  function loadNews() {
+    fetch(SCRIPT_URL)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        allItems = data.items || [];
+        statusEl.textContent = 'Top ' + allItems.length + ' most relevant stories from the last 60 days';
+        populateSources(allItems);
+        renderTicker(allItems);
+        renderNews(allItems);
+      })
+      .catch(function (err) {
+        statusEl.textContent = 'Could not load news. Check SCRIPT_URL is set correctly.';
+        console.error(err);
+      });
+  }
+
+  titleInput.addEventListener('input', applyFilters);
+  sourceSelect.addEventListener('change', applyFilters);
+  daysSelect.addEventListener('change', applyFilters);
+  clearBtn.addEventListener('click', clearAllFilters);
+
+  loadNews();
+</script>
+</body>
+</html>
